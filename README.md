@@ -4,6 +4,8 @@
 代码编辑器，基于 VS Code 使用的代码编辑器
 [Monaco](https://github.com/microsoft/monaco-editor)。
 
+![编辑器截图](https://user-images.githubusercontent.com/23280392/98114971-01b44b80-1ee1-11eb-98c3-768449e52e90.png)
+
 ## 使用方法
 
 * 运行 `yarn` 初始化项目文件夹。

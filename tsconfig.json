@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2015",
+    "module": "AMD",
+    "moduleResolution": "node",
+    "outFile": "dist/btex-monaco.js",
+    "rootDir": "src/",
+    "strict": true,
+    "removeComments": true,
+  }
+}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Page</title>
+</head>
+<body>
+  <div id="editor-frame" style="width: 800px; height: 600px; border: 1px solid grey"></div>
+  <script src="../node_modules/monaco-editor/dev/vs/loader.js"></script>
+  <script>
+    require.config({
+      paths: { vs: '../node_modules/monaco-editor/dev/vs' },
+      'vs/nls': { availableLanguages: { '*': 'zh-cn' } },
+    });
+    define('monaco-editor', ['exports', 'vs/editor/editor.main'], function (exports, monaco) {
+      Object.assign(exports, monaco);
+    });
+  </script>
+  <script src="../dist/btex-monaco.js"></script>
+  <script>
+    require(['btex-monaco'], function (btex) {
+      btex.setLocale('zh');
+      btex.createEditor(document.getElementById('editor-frame'));
+    });
+  </script>
+</body>
+</html>

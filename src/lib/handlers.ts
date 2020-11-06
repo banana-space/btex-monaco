@@ -101,10 +101,8 @@ export function onDidChangeModelContent(
         if (otherPosition?.lineNumber === position.lineNumber && direction === -1)
           cursorPosition.column += newEnvName.length - oldEnvName.length;
 
-        setVariable(editor, 'old_env_name', oldEnvName);
         if (otherPosition && /^[^\ud800-\udfff]*$/.test(oldEnvName)) {
           insertText(editor, otherPosition, newEnvName, cursorPosition, oldEnvName.length);
-          setVariable(editor, 'begin_end_sync', 'true');
         }
       }
     }

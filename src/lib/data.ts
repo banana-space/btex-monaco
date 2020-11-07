@@ -105,3 +105,13 @@ export const snippetDictionary: { [key: string]: CompletionItem } = {
     doc: { en: '', zh: '插入一对括号。' },
   },
 };
+
+export interface Import {
+  uri: monaco.Uri;
+  content: string;
+}
+
+export const imports: Import[] = [];
+
+export const initFileUrl =
+  'https://raw.githubusercontent.com/banana-space/btex/main/src/lib/init.btx';

@@ -6,6 +6,8 @@ import { btexLanguageConfiguration } from './lib/LanguageConfiguration';
 import { btexTokensProvider } from './lib/TokensProvider';
 import { StorageService } from './lib/StorageService';
 import { btexLightTheme } from './lib/themes';
+import { btexDefinitionProvider, overrideGoToDefinition } from './lib/DefinitionProvider';
+import { imports, initFileUrl } from './lib/data';
 
 // Fix Firefox clipboard issue
 if (!navigator.clipboard.readText) {
@@ -19,11 +21,17 @@ function registerLanguage() {
   monaco.languages.setMonarchTokensProvider('btex', btexTokensProvider);
   monaco.languages.setLanguageConfiguration('btex', btexLanguageConfiguration);
   monaco.languages.registerCompletionItemProvider('btex', btexCompletionItemProvider);
+  monaco.languages.registerDefinitionProvider('btex', btexDefinitionProvider);
 
   // TODO: symbol provider for sections, labels, etc.
   // TODO: formatting provider for auto indent
 
   monaco.editor.defineTheme('btex-light', btexLightTheme);
+
+  // Fetch init.btx
+  fetch(initFileUrl).then(async (value) => {
+    addImport('/init.btx', await value.text());
+  });
 }
 
 registerLanguage();
@@ -36,6 +44,8 @@ function initializeEditor(editor: monaco.editor.IStandaloneCodeEditor) {
     wordSeparators: '`~!#$%^&*()-_=+[{]}\\|;:\'",.<>/?',
   });
   editor.onDidChangeModelContent((e) => onDidChangeModelContent(editor, e));
+
+  overrideGoToDefinition(editor);
 }
 
 export function setLocale(locale: 'en' | 'zh') {
@@ -59,4 +69,10 @@ export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCod
 
   initializeEditor(editor);
   return editor;
+}
+
+export function addImport(uri: string, content: string) {
+  let fileUri = monaco.Uri.file(uri);
+  imports.push({ uri: fileUri, content });
+  monaco.editor.createModel(content, 'btex', fileUri);
 }

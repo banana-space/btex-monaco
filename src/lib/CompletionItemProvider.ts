@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-import { matchEnvironment, options } from './common';
+import { options } from './common';
 import {
   commandDictionary,
   envCommands,
@@ -7,6 +7,7 @@ import {
   envStarCommands,
   snippetDictionary,
 } from './data';
+import { matchEnvironment } from './structure';
 
 export const btexCompletionItemProvider: monaco.languages.CompletionItemProvider = {
   triggerCharacters: ['\\'],

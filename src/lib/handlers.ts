@@ -1,5 +1,6 @@
 import * as monaco from 'monaco-editor';
-import { getVariable, insertText, matchEnvironment, options, setVariable } from './common';
+import { getVariable, insertText, options, setVariable } from './common';
+import { matchEnvironment } from './structure';
 import { btexStructureAnalyser, StructureAnalyserResult } from './StructureAnalyser';
 
 export function onDidChangeModelContent(

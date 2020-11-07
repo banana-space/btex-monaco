@@ -1,5 +1,6 @@
 import * as monaco from 'monaco-editor';
 import { getVariable, insertText, matchEnvironment, options, setVariable } from './common';
+import { btexStructureAnalyser, StructureAnalyserResult } from './StructureAnalyser';
 
 export function onDidChangeModelContent(
   editor: monaco.editor.IStandaloneCodeEditor,
@@ -23,8 +24,6 @@ export function onDidChangeModelContent(
     );
   }
 
-  if (changes.length !== 1) return;
-
   // TODO: auto remove trailing spaces
   setTimeout(() => {
     let model = editor.getModel();
@@ -34,7 +33,30 @@ export function onDidChangeModelContent(
     let oldValue = getVariable(editor, 'old_value') ?? '';
     setVariable(editor, 'old_value', editor.getValue());
 
-    if (e.isUndoing || e.isRedoing) return;
+    // Analyse document structure, and store it in the model
+    let analyseAll = false;
+    for (let change of changes) {
+      if (
+        change.range.startLineNumber !== change.range.endLineNumber ||
+        change.text.includes('\n')
+      ) {
+        analyseAll = true;
+        break;
+      }
+    }
+
+    let analyserResult = ((model as any)._analyserResult ?? {}) as StructureAnalyserResult;
+    if (analyseAll) {
+      analyserResult = btexStructureAnalyser.analyse(model);
+    } else {
+      for (let change of changes)
+        Object.assign(analyserResult, btexStructureAnalyser.analyse(model, change.range));
+    }
+
+    (model as any)._analyserResult = analyserResult;
+
+    // Editing actions
+    if (e.isUndoing || e.isRedoing || changes.length !== 1) return;
 
     let line = model.getValueInRange({
       startLineNumber: position.lineNumber,

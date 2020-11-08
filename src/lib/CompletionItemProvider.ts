@@ -7,12 +7,11 @@ import {
   envStarCommands,
   snippetDictionary,
 } from './data';
-import { matchEnvironment } from './structure';
+import { detectMode, matchEnvironment } from './structure';
 
 export const btexCompletionItemProvider: monaco.languages.CompletionItemProvider = {
   triggerCharacters: ['\\'],
 
-  // TODO: suggest based on the current mode (text or math)
   provideCompletionItems: function (model, position) {
     let suggestions: monaco.languages.CompletionItem[] = [];
 
@@ -39,8 +38,10 @@ export const btexCompletionItemProvider: monaco.languages.CompletionItemProvider
         endColumn: position.column + (matchAfter ? matchAfter[1].length + 1 : 0),
       };
 
+      let mode = detectMode(model, position);
       for (let name in environmentDictionary) {
         let env = environmentDictionary[name];
+        if (mode === 'T' && env.mode === 'M') continue;
         suggestions.push({
           kind: env.kind ?? monaco.languages.CompletionItemKind.Module,
           label: name,
@@ -50,6 +51,7 @@ export const btexCompletionItemProvider: monaco.languages.CompletionItemProvider
           range,
           detail: `\\begin{${name}}` + (env.signature ?? ''),
           documentation: { value: env.doc[options.locale] },
+          tags: env.deprecated ? [monaco.languages.CompletionItemTag.Deprecated] : undefined,
         } as monaco.languages.CompletionItem);
       }
 
@@ -69,29 +71,43 @@ export const btexCompletionItemProvider: monaco.languages.CompletionItemProvider
     }
 
     if (/^\\[a-zA-Z]*$/.test(word) && !/(^|[^\\])(\\\\)+$/.test(line)) {
+      let mode = detectMode(model, position.delta(0, -word.length));
+
       // Snippets
       for (let name in snippetDictionary) {
         let snippet = snippetDictionary[name];
+        if (mode === 'T' && snippet.mode === 'M') continue;
         suggestions.push({
-          kind: snippet.kind ?? monaco.languages.CompletionItemKind.Snippet,
+          kind:
+            snippet.kind ??
+            (snippet.mode === 'M'
+              ? monaco.languages.CompletionItemKind.Field
+              : monaco.languages.CompletionItemKind.Method),
           label: name,
           insertText: snippet.insertText ?? name,
           insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-          detail: name + (snippet.signature ?? ''),
+          detail: snippet.signature ?? name,
           documentation: { value: snippet.doc[options.locale] },
+          tags: snippet.deprecated ? [monaco.languages.CompletionItemTag.Deprecated] : undefined,
         } as monaco.languages.CompletionItem);
       }
 
       // Command completion
       for (let name in commandDictionary) {
         let command = commandDictionary[name];
+        if (mode === 'T' && command.mode === 'M') continue;
         suggestions.push({
-          kind: command.kind ?? monaco.languages.CompletionItemKind.Method,
+          kind:
+            command.kind ??
+            (command.mode === 'M'
+              ? monaco.languages.CompletionItemKind.Field
+              : monaco.languages.CompletionItemKind.Method),
           label: name,
           insertText: command.insertText ?? name,
           insertTextRules: command.insertTextRules,
-          detail: name + (command.signature ?? ''),
+          detail: command.signature ?? name,
           documentation: { value: command.doc[options.locale] },
+          tags: command.deprecated ? [monaco.languages.CompletionItemTag.Deprecated] : undefined,
         } as monaco.languages.CompletionItem);
       }
 

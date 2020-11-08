@@ -1,10 +1,10 @@
 import * as monaco from 'monaco-editor';
-import { envCommands, envStarCommands, mathEnvs } from './data';
+import { envCommands, envStarCommands, mathEnvironments } from './data';
 
 export const btexTokensProvider: monaco.languages.IMonarchLanguage = {
   envCommands,
   envStarCommands,
-  mathEnvs: mathEnvs.map((name) => '{' + name + '}'),
+  mathEnvironments: mathEnvironments.map((name) => '{' + name + '}'),
   defaultToken: 'text',
   tokenizer: {
     root: [
@@ -76,7 +76,7 @@ export const btexTokensProvider: monaco.languages.IMonarchLanguage = {
         /(\{)([^\{\}\\]*)(\})/,
         {
           cases: {
-            '@mathEnvs': [
+            '@mathEnvironments': [
               'delimiter.curly',
               'string.env',
               { token: 'delimiter.curly', next: '@math.env' },
@@ -98,7 +98,7 @@ export const btexTokensProvider: monaco.languages.IMonarchLanguage = {
         /(\{)([^\{\}\\]*)(\})/,
         {
           cases: {
-            '@mathEnvs': [
+            '@mathEnvironments': [
               'delimiter.curly',
               'string.env',
               { token: 'delimiter.curly', next: '@root' },

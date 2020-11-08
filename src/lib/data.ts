@@ -11,7 +11,14 @@ export const envCommands = [
 
 export const envStarCommands = ['\\newenvironment*', '\\renewenvironment*', '\\newtheorem*'];
 
-export const mathEnvs = ['align', 'align*', 'equation', 'equation*', 'multline', 'multline*'];
+export const mathEnvironments = [
+  'align',
+  'align*',
+  'equation',
+  'equation*',
+  'multline',
+  'multline*',
+];
 
 export interface CompletionItem {
   mode: 'M' | 'T' | 'MT';
@@ -20,6 +27,7 @@ export interface CompletionItem {
   insertTextRules?: monaco.languages.CompletionItemInsertTextRule;
   signature?: string;
   doc: { [lang: string]: string };
+  deprecated?: boolean;
 }
 
 export const commandDictionary: { [key: string]: CompletionItem } = {
@@ -29,12 +37,12 @@ export const commandDictionary: { [key: string]: CompletionItem } = {
   },
   '\\addtocounter': {
     mode: 'MT',
-    signature: '{#counter}{#value}',
+    signature: '\\addtocounter{#counter}{#value}',
     doc: { en: '', zh: '使计数器 `#counter` 的值增加 `#value`。' },
   },
   '\\adef': {
     mode: 'MT',
-    signature: ' <command> <arguments> {#definition}',
+    signature: '\\adef <command> <arguments> {#definition}',
     doc: { en: '', zh: '给命令 `<command>` 添加最后匹配的定义 `#definition`。' },
   },
   '\\AE': {
@@ -47,39 +55,52 @@ export const commandDictionary: { [key: string]: CompletionItem } = {
   },
   '\\alet': {
     mode: 'MT',
-    signature: ' <command1> <command2>',
+    signature: '\\alet <command1> <command2>',
     doc: { en: '', zh: '将命令 `<command2>` 的所有定义添加在命令 `<command1>` 的定义之后。' },
   },
   '\\Alph': {
     mode: 'MT',
-    signature: '{#counter}',
+    signature: '\\Alph{#counter}',
     doc: { en: '', zh: '将计数器 `#counter` 的值用大写拉丁字母写出。' },
   },
   '\\alph': {
     mode: 'MT',
-    signature: '{#counter}',
+    signature: '\\alph{#counter}',
     doc: { en: '', zh: '将计数器 `#counter` 的值用小写拉丁字母写出。' },
+  },
+  '\\Alpha': {
+    mode: 'M',
+    doc: { en: '', zh: '希腊字母 Α。' },
+  },
+  '\\alpha': {
+    mode: 'M',
+    doc: { en: '', zh: '希腊字母 α。' },
   },
   '\\arabic': {
     mode: 'MT',
-    signature: '{#counter}',
+    signature: '\\arabic{#counter}',
     doc: { en: '', zh: '将计数器 `#counter` 的值用数字写出。' },
+  },
+  '\\atop': {
+    mode: 'M',
+    signature: '{#upper \\atop #lower}',
+    doc: { en: '', zh: '把 `#upper` 放在 `#lower` 上方。\n\n不推荐 — 建议使用 `\\substack`。' },
+    deprecated: true,
   },
   '\\begin': {
     mode: 'MT',
     insertText: '\\begin{',
-    signature: '{#environment}',
+    signature: '\\begin{#environment}',
     doc: { en: '', zh: '进入环境 `#environment`。' },
   },
   '\\def': {
     mode: 'MT',
-    signature: ' <command> <arguments> {#definition}',
+    signature: '\\def<command> <arguments> {#definition}',
     doc: { en: '', zh: '定义命令 `<command>`。' },
   },
   '\\end': {
     mode: 'MT',
-    insertText: '\\end{',
-    signature: '{#environment}',
+    signature: '\\end{#environment}',
     // The doc is also used for precise \end{...} completion items.
     doc: { en: '', zh: '退出环境 `#environment`。' },
   },
@@ -99,9 +120,8 @@ export const environmentDictionary: { [key: string]: CompletionItem } = {
 export const snippetDictionary: { [key: string]: CompletionItem } = {
   '\\left(': {
     mode: 'M',
-    kind: monaco.languages.CompletionItemKind.Method,
     insertText: '\\left( ${0} \\right)',
-    signature: ' ... \\right)',
+    signature: '\\left( ... \\right)',
     doc: { en: '', zh: '插入一对括号。' },
   },
 };

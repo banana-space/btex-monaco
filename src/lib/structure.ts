@@ -1,4 +1,5 @@
 import * as monaco from 'monaco-editor';
+import { mathEnvironments } from './data';
 import { StructureAnalyserResult } from './StructureAnalyser';
 
 // Matches \begin{name} with \end{name}.
@@ -49,4 +50,57 @@ export function matchEnvironment(
       }
     }
   }
+}
+
+export function detectMode(
+  model: monaco.editor.ITextModel,
+  position: monaco.IPosition
+): 'T' | 'M' | null {
+  let analyserResult = (model as any)._analyserResult as StructureAnalyserResult;
+  if (!analyserResult) return 'T';
+
+  let stack: string[] = [];
+
+  for (let l = 1; l <= position.lineNumber; l++) {
+    let tokens = analyserResult[l];
+    if (l === position.lineNumber) {
+      tokens = tokens.filter((token) => token.endColumn <= position.column);
+    }
+    for (let i = 0; i < tokens.length; i++) {
+      let t = tokens[i];
+      if (t.tag === '$') {
+        let isDoubleDollar =
+          tokens[i + 1]?.tag === '$' && tokens[i + 1]?.startColumn === t.endColumn;
+        if (
+          stack.length > 0 &&
+          (stack[stack.length - 1] === '$' || (isDoubleDollar && stack[stack.length - 1] === '$$'))
+        ) {
+          stack.pop();
+        } else {
+          stack.push(isDoubleDollar ? '$$' : '$');
+          if (isDoubleDollar) i++;
+        }
+      } else if (t.tag === '\\(') {
+        stack.push('\\(');
+      } else if (t.tag === '\\[') {
+        stack.push('\\[');
+      } else if (t.tag === '\\)') {
+        if (stack[stack.length - 1] === '\\(') stack.pop();
+      } else if (t.tag === '\\]') {
+        if (stack[stack.length - 1] === '\\[') stack.pop();
+      } else if (t.tag.startsWith('\\begin')) {
+        let env = t.tag.substring(7, t.tag.length - 1);
+        if (mathEnvironments.join('|').includes(env) && !env.includes('|')) {
+          stack.push(env);
+        }
+      } else if (t.tag.startsWith('\\end')) {
+        let env = t.tag.substring(5, t.tag.length - 1);
+        if (stack.length > 0 && stack[stack.length - 1] === env) {
+          stack.pop();
+        }
+      }
+    }
+  }
+
+  return stack.length > 0 ? 'M' : 'T';
 }

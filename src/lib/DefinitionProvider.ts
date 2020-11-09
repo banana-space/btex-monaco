@@ -15,12 +15,12 @@ export const btexDefinitionProvider: monaco.languages.DefinitionProvider = {
       .replace(/(^|[^\\])%.*/, '$1');
     let fullLine = model.getLineContent(position.lineNumber);
 
-    let match = line.match(/\\([a-zA-Z]+|.?)$/);
+    let match = line.match(/\\(@?@?[a-zA-Z]+|[^@]?)$/);
     if (match) {
       let sub = fullLine.substring(match.index as number);
 
-      let command = (sub.match(/^\\([a-zA-Z]+|.?)/) as RegExpMatchArray)[0];
-      if (/^\\([aegpt]?def|[apt]?let|(re)?newcommand|)$/.test(command)) return [];
+      let command = (sub.match(/^\\(@?@?[a-zA-Z]+|[^@]?)/) as RegExpMatchArray)[0];
+      if (/^\\(@@.*|)$/.test(command)) return [];
 
       let definition = findCommandDefinition(model, command);
 
@@ -63,7 +63,7 @@ function findCommandDefinition(
 
   let definitionRegex = new RegExp(
     '(\\\\@?([aegpt@]?def|[apt@]?let|(re)?newcommand\\s*\\*?\\s*\\{?)\\s*)\\\\' +
-      (/^[a-zA-Z]+/.test(command) ? `${command}(?![a-zA-Z])` : `\\${command}`)
+      (/^@?@?[a-zA-Z]+/.test(command) ? `${command}(?![a-zA-Z])` : `\\${command}`)
   );
 
   let lines = model.getLinesContent();

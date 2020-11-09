@@ -1,6 +1,6 @@
 import * as monaco from 'monaco-editor';
 import { mathEnvironments } from './data';
-import { StructureAnalyserResult } from './StructureAnalyser';
+import { LineStructureToken, StructureAnalyserResult } from './StructureAnalyser';
 
 // Matches \begin{name} with \end{name}.
 // Returns the position right after '{' in '\begin{xxx}' or '\end{xxx}'
@@ -52,6 +52,42 @@ export function matchEnvironment(
   }
 }
 
+// Jump over a number of groups.
+export function jumpOverGroups(
+  model: monaco.editor.ITextModel,
+  start: monaco.IPosition,
+  groups: number
+): monaco.IPosition | undefined {
+  if (groups <= 0) return start;
+
+  let analyserResult = (model as any)._analyserResult as StructureAnalyserResult;
+  if (!analyserResult) return;
+
+  let startIndex = 0;
+  let startLine = analyserResult[start.lineNumber];
+  while (startIndex < startLine.length && startLine[startIndex].startColumn < start.column)
+    startIndex++;
+
+  let level = 0;
+  let lineCount = model.getLineCount();
+  for (let l = start.lineNumber; l <= lineCount; l++) {
+    let tokens = analyserResult[l];
+
+    for (let i = l === start.lineNumber ? startIndex : 0; i < tokens.length; i++) {
+      if (tokens[i].tag === '{') {
+        level++;
+      } else if (tokens[i].tag === '}') {
+        level--;
+        if (level === 0) {
+          groups--;
+          if (groups === 0) return { lineNumber: l, column: tokens[i].startColumn };
+        }
+        if (level === -1) return;
+      }
+    }
+  }
+}
+
 export function detectMode(
   model: monaco.editor.ITextModel,
   position: monaco.IPosition
@@ -97,6 +133,32 @@ export function detectMode(
         let env = t.tag.substring(5, t.tag.length - 1);
         if (stack.length > 0 && stack[stack.length - 1] === env) {
           stack.pop();
+        }
+      } else if (t.tag === 'def' || t.tag === 'newenv' || t.tag === 'envdef') {
+        // Ignore everything in command definitions
+        let otherPosition = jumpOverGroups(
+          model,
+          { lineNumber: l, column: t.startColumn },
+          t.tag === 'def' ? 1 : t.tag === 'newenv' ? 3 : 4
+        );
+
+        if (otherPosition) {
+          l = otherPosition.lineNumber;
+          tokens = analyserResult[l];
+
+          if (
+            l > position.lineNumber ||
+            (l === position.lineNumber && otherPosition.column >= position.column)
+          )
+            return 'T';
+
+          if (l === position.lineNumber) {
+            tokens = tokens.filter((token) => token.endColumn <= position.column);
+          }
+
+          i = 0;
+          while (tokens[i] && tokens[i].startColumn <= otherPosition.column) i++;
+          i--;
         }
       }
     }

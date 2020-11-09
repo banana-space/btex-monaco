@@ -61,6 +61,32 @@ export const btexStructureAnalyser = {
               continue;
             }
 
+            match =
+              line.match(/^(\\@?(re)?newcommand(\s*\*)?)\s*\{\s*(\\[a-zA-Z]+|.?)?\s*\}/) ||
+              line.match(/^(\\@?([aegpt@]?def|(re)?newcommand(\s*\*)?))/);
+            if (match) {
+              tokens.push({
+                tag: 'def',
+                startColumn: column,
+                endColumn: column + match[1].length,
+              });
+              line = line.substring(match[1].length);
+              column += match[1].length;
+              continue;
+            }
+
+            match = line.match(/^\\(?:@?env[ap]?(def)|(re)?newenvironment(\s*\*)?)/);
+            if (match) {
+              tokens.push({
+                tag: match[1] === 'def' ? 'envdef' : 'newenv',
+                startColumn: column,
+                endColumn: column + match[0].length,
+              });
+              line = line.substring(match[0].length);
+              column += match[0].length;
+              continue;
+            }
+
             // Skip \{ etc.
             line = line.substring(2);
             column += 2;

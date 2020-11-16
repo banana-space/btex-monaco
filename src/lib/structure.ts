@@ -307,11 +307,16 @@ export function validateModel(model: monaco.editor.ITextModel, owner: string) {
   if (!analyserResult) return;
 
   let lines = model.getLineCount();
+  // In command definitions, allow unmatched \begin, \[, etc.
+  let defUntil: monaco.IPosition | undefined = undefined;
   for (let l = 1; l <= lines; l++) {
     let tokens = analyserResult[l];
 
     for (let i = 0; i < tokens.length; i++) {
       let t = tokens[i];
+      let defMode =
+        defUntil &&
+        (defUntil.lineNumber > l || (defUntil.lineNumber === l && defUntil.column > t.startColumn));
 
       if (t.tag === '$') {
         let isDoubleDollar =
@@ -332,13 +337,14 @@ export function validateModel(model: monaco.editor.ITextModel, owner: string) {
           if (isDoubleDollar) i++;
         }
       } else if (
-        t.tag === '\\(' ||
-        t.tag === '\\[' ||
         t.tag === '{' ||
-        t.tag.startsWith('\\begin')
+        (!defMode && (t.tag === '\\(' || t.tag === '\\[' || t.tag.startsWith('\\begin')))
       ) {
         stack.push({ line: l, ...t });
-      } else if (t.tag === '\\)' || t.tag === '\\]' || t.tag === '}' || t.tag.startsWith('\\end')) {
+      } else if (
+        t.tag === '}' ||
+        (!defMode && (t.tag === '\\)' || t.tag === '\\]' || t.tag.startsWith('\\end')))
+      ) {
         let copy = [...stack];
         let newMarkers: monaco.editor.IMarkerData[] = [];
         while (stack.length > 0) {
@@ -367,6 +373,12 @@ export function validateModel(model: monaco.editor.ITextModel, owner: string) {
           });
           stack = copy;
         }
+      } else if (!defMode && (t.tag === 'def' || t.tag === 'newenv' || t.tag === 'envdef')) {
+        defUntil = jumpOverGroups(
+          model,
+          { lineNumber: l, column: t.startColumn },
+          t.tag === 'def' ? 1 : t.tag === 'newenv' ? 3 : 4
+        );
       }
     }
   }

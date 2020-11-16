@@ -70,8 +70,6 @@ export function onDidChangeModelContent(
 
     let newText = changes[0].text;
 
-    let begin_line = getVariable(editor, 'begin_line');
-
     // Complete $$$$
     if (newText === '$' && line.endsWith('$$')) {
       insertText(editor, position, `$$`);
@@ -80,14 +78,18 @@ export function onDidChangeModelContent(
     // Trigger \begin{...} completion
     if ('\\begin{'.endsWith(newText) && line.endsWith('{') && newText !== '') {
       editor.trigger(null, 'editor.action.triggerSuggest', undefined);
-      setVariable(editor, 'begin_line', position.lineNumber.toString());
       return;
     }
 
     // Non-auto-completed \begin
     let match = line.match(/\\begin\s*\{([^\{\}\\\s]*)\}$/);
-    if (match && newText === '}' && begin_line === position.lineNumber.toString()) {
+    if (match && newText === '}') {
       insertText(editor, position, `\\end{${match[1]}}`);
+    }
+
+    match = line.match(/\\begin\s*\{$/);
+    if (match && newText === '{}') {
+      insertText(editor, position, '}\\end{}', position, 1);
     }
 
     // Sync \begin{} with \end{}
@@ -129,9 +131,6 @@ export function onDidChangeModelContent(
         }
       }
     }
-
-    if (begin_line && begin_line !== position.lineNumber.toString())
-      setVariable(editor, 'begin_line');
 
     onDidChangeCursorPosition(editor);
   }, 0);

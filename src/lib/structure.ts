@@ -201,7 +201,7 @@ export function getHighlightBrackets(
   model: monaco.editor.ITextModel,
   position: monaco.IPosition
 ): monaco.IRange[] {
-  let stack: (LineStructureToken & { line: number; highlight?: boolean })[] = [];
+  let stack: (LineStructureToken & { line: number; enclosesCursor?: boolean })[] = [];
 
   let analyserResult = (model as any)._analyserResult as StructureAnalyserResult;
   if (!analyserResult) return [];
@@ -223,7 +223,7 @@ export function getHighlightBrackets(
         (l > position.lineNumber || (l === position.lineNumber && t.startColumn > position.column))
       ) {
         if (stack.length > 0) {
-          stack[stack.length - 1].highlight = true;
+          for (let token of stack) token.enclosesCursor = true;
           isAfterCursor = true;
         } else {
           return [];
@@ -242,7 +242,7 @@ export function getHighlightBrackets(
           isCursorInsideToken ||=
             !isSingleDollar && l === position.lineNumber && t.startColumn === position.column - 2;
           let popped = stack.pop();
-          if (popped && (popped?.highlight || isCursorInsideToken))
+          if (popped && (popped?.enclosesCursor || isCursorInsideToken))
             return [
               toRange(popped, popped.line),
               toRange(
@@ -277,7 +277,7 @@ export function getHighlightBrackets(
             continue;
           }
 
-          if (popped?.highlight || isCursorInsideToken)
+          if (popped?.enclosesCursor || isCursorInsideToken)
             return [toRange(popped, popped.line), toRange(t, l)];
           copy = stack; // No need to recover stack later
           break;
@@ -287,7 +287,7 @@ export function getHighlightBrackets(
 
       if (isCursorInsideToken) {
         if (stack.length > 0) {
-          stack[stack.length - 1].highlight = true;
+          for (let token of stack) token.enclosesCursor = true;
           isAfterCursor = true;
         } else {
           return [];

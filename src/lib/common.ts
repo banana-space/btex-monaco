@@ -6,25 +6,6 @@ export const options = {
   locale: 'en',
 };
 
-export function setVariable(
-  editor: monaco.editor.IStandaloneCodeEditor,
-  name: string,
-  value?: string
-) {
-  let _editor = editor as any;
-  if (!_editor['_variables']) _editor['_variables'] = {};
-  _editor['_variables'][name] = value;
-}
-
-export function getVariable(
-  editor: monaco.editor.IStandaloneCodeEditor,
-  name: string
-): string | undefined {
-  let _editor = editor as any;
-  if (!_editor['_variables']) return undefined;
-  return _editor['_variables'][name];
-}
-
 export function insertText(
   editor: monaco.editor.IStandaloneCodeEditor,
   position: monaco.IPosition,

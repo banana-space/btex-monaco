@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-import { getVariable, insertText, options, setVariable } from './common';
+import { insertText, options } from './common';
 import { getHighlightBrackets, matchEnvironment } from './structure';
 import { btexStructureAnalyser, StructureAnalyserResult } from './StructureAnalyser';
 
@@ -11,7 +11,7 @@ export function onDidChangeModelContent(
   // but we do not want them
   let changes = e.changes;
   if (changes.length > 1) {
-    let oldValue = getVariable(editor, 'old_value') ?? '';
+    let oldValue = ((editor as any)._oldValue as string) ?? '';
     var prevModel = monaco.editor.createModel(oldValue, 'btex');
     changes = changes.filter(
       (change) =>
@@ -31,8 +31,8 @@ export function onDidChangeModelContent(
     let position = editor.getPosition();
     if (!model || !position) return;
 
-    let oldValue = getVariable(editor, 'old_value') ?? '';
-    setVariable(editor, 'old_value', editor.getValue());
+    let oldValue = ((editor as any)._oldValue as string) ?? '';
+    (editor as any)._oldValue = editor.getValue();
 
     // Analyse document structure, and store it in the model
     let analyseAll = false;

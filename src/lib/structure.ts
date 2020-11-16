@@ -274,8 +274,7 @@ export function getHighlightBrackets(
         while (stack.length > 0) {
           let popped = stack.pop();
           if (!popped || matchingBracket(popped.tag) !== t.tag) {
-            if (popped?.tag === '{') break;
-            else continue;
+            continue;
           }
 
           if (popped?.highlight || isCursorInsideToken)

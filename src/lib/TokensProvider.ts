@@ -10,7 +10,7 @@ export const btexTokensProvider: monaco.languages.IMonarchLanguage = {
     root: [
       { include: '@common' },
       [/\\begin(?=\s*\{)/, 'command', '@begin'],
-      [/\\@?[aegpt@]?def/, { token: 'command', next: '@def.1' }],
+      [/\\@?[aegpt@]?def(?![a-zA-Z])/, { token: 'command', next: '@def.1' }],
       [
         /(\\@?(?:re)?newcommand)(\s*)(\**)(\s*)(\{)(\s*)(\\(?:[a-zA-Z]+|.))(\s*)(\})/,
         [
@@ -69,6 +69,7 @@ export const btexTokensProvider: monaco.languages.IMonarchLanguage = {
       [/[\^_]/, 'text.special'],
       [/\\begin(?=\s*\{)/, 'command', '@begin'],
       [/\\[\\]/, 'command'],
+      [/\{/, 'delimiter.curly', 'math.group'],
       { include: '@commands.math' },
       { include: '@common' },
       [/./, 'text.math'],
@@ -142,6 +143,12 @@ export const btexTokensProvider: monaco.languages.IMonarchLanguage = {
     'math.single': [[/\$/, 'delimiter.command', '@pop'], { include: '@math' }],
     'math.[': [[/\\\]/, 'delimiter.command', '@popall'], { include: '@math' }],
     'math.(': [[/\\\)/, 'delimiter.command', '@pop'], { include: '@math' }],
+
+    'math.group': [
+      [/\{/, 'delimiter.curly', '@push'],
+      [/\}/, 'delimiter.curly', '@pop'],
+      { include: '@math' },
+    ],
 
     'def.1': [
       [/\{/, 'delimiter.curly', '@def.group.1'],

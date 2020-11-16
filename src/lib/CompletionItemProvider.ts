@@ -70,7 +70,11 @@ export const btexCompletionItemProvider: monaco.languages.CompletionItemProvider
       return { suggestions }; // suppresses other completions
     }
 
-    if (/^\\[a-zA-Z]*$/.test(word) && !/(^|[^\\])(\\\\)+$/.test(line)) {
+    if (
+      /^\\[a-zA-Z]*$/.test(word) &&
+      !/(^|[^\\#]|#\\)(\\\\)+$/.test(line) &&
+      !/#\\[a-zA-Z]*$/.test(line)
+    ) {
       let mode = detectMode(model, position.delta(0, -word.length));
 
       // Snippets

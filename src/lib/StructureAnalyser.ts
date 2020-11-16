@@ -92,6 +92,13 @@ export const btexStructureAnalyser = {
             column += 2;
             continue;
 
+          case '#':
+            let argMatch = line.match(/^#+.?/);
+            let matchLength = argMatch ? argMatch[0].length : 1;
+            line = line.substring(matchLength);
+            column += matchLength;
+            continue;
+
           default:
             line = line.substring(1);
             column++;

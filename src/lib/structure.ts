@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-import { mathEnvironments } from './data';
+import { getString, mathEnvironments } from './data';
 import { LineStructureToken, StructureAnalyserResult } from './StructureAnalyser';
 
 // Matches \begin{name} with \end{name}.
@@ -298,4 +298,88 @@ export function getHighlightBrackets(
   }
 
   return [];
+}
+
+export function validateModel(model: monaco.editor.ITextModel, owner: string) {
+  let stack: (LineStructureToken & { line: number })[] = [];
+  let markers: monaco.editor.IMarkerData[] = [];
+
+  let analyserResult = (model as any)._analyserResult as StructureAnalyserResult;
+  if (!analyserResult) return;
+
+  let lines = model.getLineCount();
+  for (let l = 1; l <= lines; l++) {
+    let tokens = analyserResult[l];
+
+    for (let i = 0; i < tokens.length; i++) {
+      let t = tokens[i];
+
+      if (t.tag === '$') {
+        let isDoubleDollar =
+          tokens[i + 1]?.tag === '$' && tokens[i + 1]?.startColumn === t.endColumn;
+        if (
+          stack.length > 0 &&
+          (stack[stack.length - 1].tag === '$' ||
+            (isDoubleDollar && stack[stack.length - 1].tag === '$$'))
+        ) {
+          if (stack[stack.length - 1].tag !== '$') i++;
+          stack.pop();
+        } else {
+          stack.push(
+            isDoubleDollar
+              ? { line: l, startColumn: t.startColumn, endColumn: t.startColumn + 2, tag: '$$' }
+              : { line: l, ...t }
+          );
+          if (isDoubleDollar) i++;
+        }
+      } else if (
+        t.tag === '\\(' ||
+        t.tag === '\\[' ||
+        t.tag === '{' ||
+        t.tag.startsWith('\\begin')
+      ) {
+        stack.push({ line: l, ...t });
+      } else if (t.tag === '\\)' || t.tag === '\\]' || t.tag === '}' || t.tag.startsWith('\\end')) {
+        let copy = [...stack];
+        let newMarkers: monaco.editor.IMarkerData[] = [];
+        while (stack.length > 0) {
+          let popped = stack.pop();
+          if (!popped) continue;
+          else if (matchingBracket(popped.tag) !== t.tag) {
+            newMarkers.push({
+              ...toRange(popped, popped.line),
+              severity: monaco.MarkerSeverity.Error,
+              message: getString('unmatched-bracket', popped.tag),
+            });
+            continue;
+          }
+
+          copy = stack; // No need to recover stack later
+          break;
+        }
+
+        if (stack === copy) {
+          markers.push(...newMarkers);
+        } else {
+          markers.push({
+            ...toRange(t, l),
+            severity: monaco.MarkerSeverity.Error,
+            message: getString('unmatched-bracket', t.tag),
+          });
+          stack = copy;
+        }
+      }
+    }
+  }
+
+  for (let token of stack) {
+    markers.push({
+      ...toRange(token, token.line),
+      severity: monaco.MarkerSeverity.Error,
+      message: getString('unmatched-bracket', token.tag),
+    });
+    continue;
+  }
+
+  monaco.editor.setModelMarkers(model, owner, markers);
 }

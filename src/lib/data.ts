@@ -1,4 +1,5 @@
 import * as monaco from 'monaco-editor';
+import { options } from './common';
 
 export const envCommands = [
   '\\begin',
@@ -125,6 +126,25 @@ export const snippetDictionary: { [key: string]: CompletionItem } = {
     doc: { en: '', zh: '插入一对括号。' },
   },
 };
+
+export const strings: { [key: string]: { [lang: string]: string } } = {
+  'unmatched-bracket': {
+    en: "Unmatched '${1}'.",
+    zh: "'${1}' 没有配对。",
+  },
+};
+
+export function getString(key: string, ...args: string[]): string {
+  let value = strings[key];
+  if (!value) return '';
+
+  let str = value[options.locale] ?? value['en'];
+  str = str.replace(/\$(_+)\{/g, '$$__$1{');
+  for (let i = 0; i < args.length; i++) {
+    str = str.replace('${' + (i + 1) + '}', args[i].replace(/\$(_*)\{/g, '$$__$1{'));
+  }
+  return str.replace(/\$__(_*)\{/g, '$$$1{');
+}
 
 export interface Import {
   uri: monaco.Uri;

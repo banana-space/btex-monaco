@@ -1,6 +1,6 @@
 import * as monaco from 'monaco-editor';
 import { insertText, options } from './common';
-import { getHighlightBrackets, matchEnvironment } from './structure';
+import { getHighlightBrackets, matchEnvironment, validateModel } from './structure';
 import { btexStructureAnalyser, StructureAnalyserResult } from './StructureAnalyser';
 
 export function onDidChangeModelContent(
@@ -24,6 +24,14 @@ export function onDidChangeModelContent(
         )
     );
   }
+
+  let validateTimeout = (editor as any)._validateTimeout as number;
+  if (validateTimeout !== undefined) clearTimeout(validateTimeout);
+  (editor as any)._validateTimeout = setTimeout(() => {
+    let model = editor.getModel();
+    if (model) validateModel(model, editor.getId());
+    delete (editor as any)._validateTimeout;
+  }, 500);
 
   // TODO: auto remove trailing spaces
   setTimeout(() => {

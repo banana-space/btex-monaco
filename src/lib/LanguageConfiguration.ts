@@ -18,14 +18,7 @@ export const btexLanguageConfiguration: monaco.languages.LanguageConfiguration =
     { open: '`', close: "'" },
     { open: '$', close: '$' },
   ],
-  brackets: [
-    ['{', '}'],
-    ['[', ']'],
-    ['\\{', '\\}'],
-    ['\\[', '\\]'],
-    ['\\(', '\\)'],
-    ['[[', ']]'],
-  ],
+  brackets: [],
   comments: { lineComment: '%' },
   indentationRules: {
     increaseIndentPattern: /\\begin\s*\{[^\{\}\\]*\}(?!.*\\(begin|end)\s*\{)/,
@@ -45,6 +38,21 @@ export const btexLanguageConfiguration: monaco.languages.LanguageConfiguration =
     {
       beforeText: /\$\$\s*$/,
       afterText: /^\s*\$\$/,
+      action: { indentAction: monaco.languages.IndentAction.IndentOutdent },
+    },
+    {
+      beforeText: /\\\[\s*$/,
+      afterText: /^\s*\\\]/,
+      action: { indentAction: monaco.languages.IndentAction.IndentOutdent },
+    },
+    {
+      beforeText: /\\\(\s*$/,
+      afterText: /^\s*\\\)/,
+      action: { indentAction: monaco.languages.IndentAction.IndentOutdent },
+    },
+    {
+      beforeText: /\{\s*$/,
+      afterText: /^\s*\}/,
       action: { indentAction: monaco.languages.IndentAction.IndentOutdent },
     },
   ],

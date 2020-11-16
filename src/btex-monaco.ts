@@ -1,7 +1,7 @@
 import * as monaco from 'monaco-editor';
 import { options } from './lib/common';
 import { btexCompletionItemProvider } from './lib/CompletionItemProvider';
-import { onDidChangeModelContent } from './lib/handlers';
+import { onDidChangeCursorPosition, onDidChangeModelContent } from './lib/handlers';
 import { btexLanguageConfiguration } from './lib/LanguageConfiguration';
 import { btexTokensProvider } from './lib/TokensProvider';
 import { StorageService } from './lib/StorageService';
@@ -44,6 +44,7 @@ function initializeEditor(editor: monaco.editor.IStandaloneCodeEditor) {
     wordSeparators: '`~!#$%^&*()-_=+[{]}\\|;:\'",.<>/?',
   });
   editor.onDidChangeModelContent((e) => onDidChangeModelContent(editor, e));
+  editor.onDidChangeCursorPosition((e) => onDidChangeCursorPosition(editor, e));
 
   overrideGoToDefinition(editor);
 }

@@ -1,6 +1,6 @@
 import * as monaco from 'monaco-editor';
 import { getVariable, insertText, options, setVariable } from './common';
-import { matchEnvironment } from './structure';
+import { getHighlightBrackets, matchEnvironment } from './structure';
 import { btexStructureAnalyser, StructureAnalyserResult } from './StructureAnalyser';
 
 export function onDidChangeModelContent(
@@ -132,5 +132,39 @@ export function onDidChangeModelContent(
 
     if (begin_line && begin_line !== position.lineNumber.toString())
       setVariable(editor, 'begin_line');
+
+    onDidChangeCursorPosition(editor);
+  }, 0);
+}
+
+export function onDidChangeCursorPosition(
+  editor: monaco.editor.IStandaloneCodeEditor,
+  e?: monaco.editor.ICursorPositionChangedEvent
+) {
+  if (e && e.reason !== monaco.editor.CursorChangeReason.Explicit) {
+    // Cursor change caused by content change,
+    // handle the content change event instead.
+    return;
+  }
+
+  setTimeout(() => {
+    let model = editor.getModel();
+    let position = editor.getPosition();
+    if (!model || !position) return;
+
+    let oldDecorations = ((model as any)._bracketsDecorations as string[]) ?? [];
+
+    let brackets = getHighlightBrackets(model, position);
+    let newDecorations = model.deltaDecorations(
+      oldDecorations,
+      brackets.map((range) => ({
+        options: {
+          className: 'bracket-match',
+          stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+        },
+        range,
+      }))
+    );
+    (model as any)._bracketsDecorations = newDecorations;
   }, 0);
 }

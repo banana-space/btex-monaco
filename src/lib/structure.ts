@@ -107,11 +107,11 @@ export function detectMode(
       if (t.tag === '$') {
         let isDoubleDollar =
           tokens[i + 1]?.tag === '$' && tokens[i + 1]?.startColumn === t.endColumn;
-        if (
-          stack.length > 0 &&
-          (stack[stack.length - 1] === '$' || (isDoubleDollar && stack[stack.length - 1] === '$$'))
-        ) {
+        if (stack.length > 0 && stack[stack.length - 1] === '$') {
           stack.pop();
+        } else if (stack.length > 0 && isDoubleDollar && stack[stack.length - 1] === '$$') {
+          stack.pop();
+          i++;
         } else {
           stack.push(isDoubleDollar ? '$$' : '$');
           if (isDoubleDollar) i++;
@@ -120,10 +120,16 @@ export function detectMode(
         stack.push('\\(');
       } else if (t.tag === '\\[') {
         stack.push('\\[');
+      } else if (t.tag === '{') {
+        stack.push('{');
       } else if (t.tag === '\\)') {
         if (stack[stack.length - 1] === '\\(') stack.pop();
       } else if (t.tag === '\\]') {
         if (stack[stack.length - 1] === '\\[') stack.pop();
+      } else if (t.tag === '}') {
+        while (stack.length > 0) {
+          if (stack.pop() === '{') break;
+        }
       } else if (t.tag.startsWith('\\begin')) {
         let env = t.tag.substring(7, t.tag.length - 1);
         if (mathEnvironments.join('|').includes(env) && !env.includes('|')) {
@@ -164,5 +170,132 @@ export function detectMode(
     }
   }
 
-  return stack.length > 0 ? 'M' : 'T';
+  return stack.filter((t) => t !== '{').length > 0 ? 'M' : 'T';
+}
+
+function toRange(
+  token: { startColumn: number; endColumn: number },
+  lineNumber: number
+): monaco.IRange {
+  return {
+    startLineNumber: lineNumber,
+    endLineNumber: lineNumber,
+    startColumn: token.startColumn,
+    endColumn: token.endColumn,
+  };
+}
+
+function matchingBracket(bracket: string) {
+  return bracket === '{'
+    ? '}'
+    : bracket === '\\('
+    ? '\\)'
+    : bracket === '\\['
+    ? '\\]'
+    : bracket.startsWith('\\begin')
+    ? bracket.replace('\\begin', '\\end')
+    : '';
+}
+
+export function getHighlightBrackets(
+  model: monaco.editor.ITextModel,
+  position: monaco.IPosition
+): monaco.IRange[] {
+  let stack: (LineStructureToken & { line: number; highlight?: boolean })[] = [];
+
+  let analyserResult = (model as any)._analyserResult as StructureAnalyserResult;
+  if (!analyserResult) return [];
+
+  let lines = model.getLineCount();
+  let isAfterCursor = false;
+  for (let l = 1; l <= lines; l++) {
+    let tokens = analyserResult[l];
+
+    for (let i = 0; i < tokens.length; i++) {
+      let t = tokens[i];
+      let isCursorInsideToken =
+        l === position.lineNumber &&
+        t.startColumn <= position.column &&
+        t.endColumn >= position.column;
+
+      if (
+        !isAfterCursor &&
+        (l > position.lineNumber || (l === position.lineNumber && t.startColumn > position.column))
+      ) {
+        if (stack.length > 0) {
+          stack[stack.length - 1].highlight = true;
+          isAfterCursor = true;
+        } else {
+          return [];
+        }
+      }
+
+      if (t.tag === '$') {
+        let isDoubleDollar =
+          tokens[i + 1]?.tag === '$' && tokens[i + 1]?.startColumn === t.endColumn;
+        if (
+          stack.length > 0 &&
+          (stack[stack.length - 1].tag === '$' ||
+            (isDoubleDollar && stack[stack.length - 1].tag === '$$'))
+        ) {
+          let isSingleDollar = stack[stack.length - 1].tag === '$';
+          isCursorInsideToken ||=
+            !isSingleDollar && l === position.lineNumber && t.startColumn === position.column - 2;
+          let popped = stack.pop();
+          if (popped && (popped?.highlight || isCursorInsideToken))
+            return [
+              toRange(popped, popped.line),
+              toRange(
+                {
+                  startColumn: t.startColumn,
+                  endColumn: isSingleDollar ? t.endColumn : t.startColumn + 2,
+                },
+                l
+              ),
+            ];
+          if (!isSingleDollar) i++;
+        } else {
+          stack.push(
+            isDoubleDollar
+              ? { line: l, startColumn: t.startColumn, endColumn: t.startColumn + 2, tag: '$$' }
+              : { line: l, ...t }
+          );
+          if (isDoubleDollar) i++;
+        }
+      } else if (
+        t.tag === '\\(' ||
+        t.tag === '\\[' ||
+        t.tag === '{' ||
+        t.tag.startsWith('\\begin')
+      ) {
+        stack.push({ line: l, ...t });
+      } else if (t.tag === '\\)' || t.tag === '\\]' || t.tag === '}' || t.tag.startsWith('\\end')) {
+        let copy = [...stack];
+        while (stack.length > 0) {
+          let popped = stack.pop();
+          if (!popped || matchingBracket(popped.tag) !== t.tag) {
+            if (popped?.tag === '{') break;
+            else continue;
+          }
+
+          if (popped?.highlight || isCursorInsideToken)
+            return [toRange(popped, popped.line), toRange(t, l)];
+          copy = stack; // No need to recover stack later
+          break;
+        }
+        stack = copy;
+      }
+
+      if (isCursorInsideToken) {
+        if (stack.length > 0) {
+          stack[stack.length - 1].highlight = true;
+          isAfterCursor = true;
+        } else {
+          return [];
+        }
+      }
+    }
+  }
+
+  return [];
 }

@@ -28,7 +28,7 @@ export const btexStructureAnalyser = {
 
       let line = model.getLineContent(l);
       if (line.length > options.maxParsedLineLength) continue;
-      line = line.replace(/\\\\/g, '  ').replace(/(^|[^\\])%.*/, '');
+      line = line.replace(/\\\\/g, '  ').replace(/(^|[^\\])%.*/, '$1');
 
       let column = 1;
       while (line.length > 0) {

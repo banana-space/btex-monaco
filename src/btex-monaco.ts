@@ -53,15 +53,22 @@ export function setLocale(locale: 'en' | 'zh') {
   options.locale = locale;
 }
 
-export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
+export function createEditor(
+  element: HTMLElement,
+  value?: string,
+  oldValue?: string,
+  useBtex: boolean = true
+): monaco.editor.IStandaloneCodeEditor {
   let storage = new StorageService();
   storage.store('expandSuggestionDocs', true, 0);
 
   let editor = monaco.editor.create(
     element,
     {
-      language: 'btex',
+      language: useBtex ? 'btex' : undefined,
       theme: 'btex-light',
+      fontFamily: '"Cascadia Code", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
+      fontSize: 16,
     },
     {
       storageService: storage,
@@ -69,6 +76,8 @@ export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCod
   );
 
   initializeEditor(editor);
+  editor.setValue(value ?? '');
+  (editor as any)._diffSource = oldValue ?? '';
   return editor;
 }
 

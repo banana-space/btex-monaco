@@ -1,4 +1,5 @@
 import * as monaco from 'monaco-editor';
+import { diffLines } from 'diff';
 import { insertText, options } from './common';
 import { getHighlightBrackets, matchEnvironment, validateModel } from './structure';
 import { btexStructureAnalyser, StructureAnalyserResult } from './StructureAnalyser';
@@ -64,9 +65,61 @@ export function onDidChangeModelContent(
 
     (model as any)._analyserResult = analyserResult;
 
-    // Editing actions
+    // Diff
+    let diffSource = (editor as any)._diffSource;
+    if (diffSource !== undefined) {
+      let changes = diffLines(diffSource, model.getValue());
+
+      let decorations: monaco.editor.IModelDeltaDecoration[] = [];
+      let line = 1;
+      for (let i = 0; i < changes.length; i++) {
+        let change = changes[i];
+        if (change.added) {
+          decorations.push({
+            range: new monaco.Range(line, 1, line + (change.count ?? 1) - 1, 1),
+            options: {
+              isWholeLine: true,
+              linesDecorationsClassName: 'line-dec-added',
+              minimap: {
+                color: '#81b88b',
+                position: monaco.editor.MinimapPosition.Gutter,
+              },
+            },
+          });
+          line += change.count ?? 1;
+        } else if (change.removed) {
+          let startLine = line;
+          if (i + 1 < changes.length && changes[i + 1].added) {
+            line += changes[i + 1].count ?? 1;
+            i++;
+          }
+
+          decorations.push({
+            range: new monaco.Range(startLine, 1, startLine === line ? line : line - 1, 1),
+            options: {
+              isWholeLine: true,
+              linesDecorationsClassName:
+                startLine === line ? 'line-dec-removed' : 'line-dec-modified',
+              minimap: {
+                color: startLine === line ? '#ca4b51' : '#66afe0',
+                position: monaco.editor.MinimapPosition.Gutter,
+              },
+            },
+          });
+        } else {
+          line += change.count ?? 1;
+        }
+      }
+
+      let oldDecorations = ((model as any)._diffDecorations as string[]) ?? [];
+      let newDecorations = editor.deltaDecorations(oldDecorations, decorations);
+      (model as any)._diffDecorations = newDecorations;
+    }
+
+    // Exit if is undo/redo
     if (e.isUndoing || e.isRedoing || changes.length !== 1) return;
 
+    // Editing actions
     let line = model.getValueInRange({
       startLineNumber: position.lineNumber,
       endLineNumber: position.lineNumber,
@@ -91,7 +144,11 @@ export function onDidChangeModelContent(
 
     // Non-auto-completed \begin
     let match = line.match(/\\begin\s*\{([^\{\}\\\s]*)\}$/);
-    if (match && newText === '}') {
+    if (
+      match &&
+      newText === '}' &&
+      !fullLine.substr(line.length).trim().startsWith(`\\end{${match[1]}}`)
+    ) {
       insertText(editor, position, `\\end{${match[1]}}`);
     }
 

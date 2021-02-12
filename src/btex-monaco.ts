@@ -57,7 +57,7 @@ export function createEditor(
   element: HTMLElement,
   value?: string,
   oldValue?: string,
-  useBtex: boolean = true
+  language: string = 'btex'
 ): monaco.editor.IStandaloneCodeEditor {
   let storage = new StorageService();
   storage.store('expandSuggestionDocs', true, 0);
@@ -65,7 +65,7 @@ export function createEditor(
   let editor = monaco.editor.create(
     element,
     {
-      language: useBtex ? 'btex' : undefined,
+      language,
       theme: 'btex-light',
       fontFamily: '"Cascadia Code", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
       fontSize: 16,
@@ -75,7 +75,7 @@ export function createEditor(
     }
   );
 
-  initializeEditor(editor);
+  if (language === 'btex') initializeEditor(editor);
   editor.setValue(value ?? '');
   (editor as any)._diffSource = oldValue ?? '';
   return editor;

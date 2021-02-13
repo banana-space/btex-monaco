@@ -161,7 +161,13 @@ function findAllCommands(model: monaco.editor.ITextModel, ignoreOnce?: string): 
   const regex = /\\([a-zA-Z]+)/g;
   let seen = new Set<string>();
 
-  for (let line of model.getLinesContent()) {
+  let lines = model.getLinesContent();
+
+  // TODO: make this better
+  let preambleModel = monaco.editor.getModel(monaco.Uri.file('/preamble'));
+  if (preambleModel) lines.push(...preambleModel.getLinesContent());
+
+  for (let line of lines) {
     if (line.length > options.maxParsedLineLength) continue;
     let match = line.match(regex);
     if (!match) continue;
@@ -191,7 +197,13 @@ function findAllEnvironments(
   let seen = new Set<string>();
   let ignoredOnce = false;
 
-  for (let line of model.getLinesContent()) {
+  let lines = model.getLinesContent();
+
+  // TODO: make this better
+  let preambleModel = monaco.editor.getModel(monaco.Uri.file('/preamble'));
+  if (preambleModel) lines.push(...preambleModel.getLinesContent());
+
+  for (let line of lines) {
     if (line.length > options.maxParsedLineLength) continue;
     let match = line.match(regex);
     if (!match) continue;

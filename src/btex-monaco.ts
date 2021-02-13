@@ -57,7 +57,8 @@ export function createEditor(
   element: HTMLElement,
   value?: string,
   oldValue?: string,
-  language: string = 'btex'
+  language: string = 'btex',
+  readOnly?: boolean
 ): monaco.editor.IStandaloneCodeEditor {
   let storage = new StorageService();
   storage.store('expandSuggestionDocs', true, 0);
@@ -69,6 +70,7 @@ export function createEditor(
       theme: 'btex-light',
       fontFamily: '"Cascadia Code", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
       fontSize: 16,
+      readOnly,
     },
     {
       storageService: storage,

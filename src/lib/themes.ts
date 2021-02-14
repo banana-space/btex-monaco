@@ -23,7 +23,10 @@ export const btexLightTheme: monaco.editor.IStandaloneThemeData = {
     { token: 'comment', foreground: 'a0a0a0' },
   ],
   colors: {
-    'editorLineNumber.foreground': '#b0c0c0',
+    'editorLineNumber.foreground': '#c4d0d4',
+    'editorLineNumber.activeForeground': '#78848c',
+    'editor.lineHighlightBackground': '#8098a018',
+    'editor.lineHighlightBorder': 'transparent',
     'editor.selectionBackground': '#0090d028',
     'minimap.selectionHighlight': '#0090d050',
     'menu.selectionBackground': '#0090d028',

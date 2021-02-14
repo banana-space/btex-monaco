@@ -7,11 +7,11 @@
     "build": "./node_modules/.bin/tsc"
   },
   "dependencies": {
-    "@types/diff": "^5.0.0",
     "diff": "^5.0.0",
-    "monaco-editor": "^0.21.2"
+    "monaco-editor": "^0.22.3"
   },
   "devDependencies": {
+    "@types/diff": "^5.0.0",
     "serve": "^11.3.2",
     "typescript": "^4.0.5"
   }

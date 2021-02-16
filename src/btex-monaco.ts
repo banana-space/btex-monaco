@@ -4,10 +4,9 @@ import { btexCompletionItemProvider } from './lib/CompletionItemProvider';
 import { onDidChangeCursorPosition, onDidChangeModelContent } from './lib/handlers';
 import { btexLanguageConfiguration } from './lib/LanguageConfiguration';
 import { btexTokensProvider } from './lib/TokensProvider';
-import { StorageService } from './lib/StorageService';
 import { btexLightTheme } from './lib/themes';
 import { btexDefinitionProvider, overrideGoToDefinition } from './lib/DefinitionProvider';
-import { imports, initFileUrl } from './lib/data';
+import { imports } from './lib/data';
 
 // Fix Firefox clipboard issue
 if (!navigator.clipboard.readText) {
@@ -27,11 +26,6 @@ function registerLanguage() {
   // TODO: formatting provider for auto indent
 
   monaco.editor.defineTheme('btex-light', btexLightTheme);
-
-  // Fetch init.btx
-  fetch(initFileUrl).then(async (value) => {
-    addImport('/init.btx', await value.text());
-  });
 }
 
 registerLanguage();
@@ -60,26 +54,17 @@ export function createEditor(
   language: string = 'btex',
   readOnly?: boolean
 ): monaco.editor.IStandaloneCodeEditor {
-  let storage = new StorageService();
-  storage.store('expandSuggestionDocs', true, 0);
-
-  let editor = monaco.editor.create(
-    element,
-    {
-      language,
-      theme: 'btex-light',
-      fontFamily: '"Cascadia Code", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
-      fontSize: 16,
-      readOnly,
-    },
-    {
-      storageService: storage,
-    }
-  );
+  let editor = monaco.editor.create(element, {
+    language,
+    theme: 'btex-light',
+    fontFamily: '"Cascadia Code", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
+    fontSize: 16,
+    readOnly,
+  });
 
   if (language === 'btex') initializeEditor(editor);
   editor.setValue(value ?? '');
-  (editor as any)._diffSource = oldValue ?? '';
+  if (!readOnly) (editor as any)._diffSource = oldValue ?? '';
   return editor;
 }
 

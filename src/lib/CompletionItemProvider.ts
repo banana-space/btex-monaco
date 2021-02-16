@@ -50,7 +50,6 @@ export const btexCompletionItemProvider: monaco.languages.CompletionItemProvider
             env.insertTextRules ?? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           range,
           detail: `\\begin{${name}}` + (env.signature ?? ''),
-          documentation: { value: env.doc[options.locale] },
           tags: env.deprecated ? [monaco.languages.CompletionItemTag.Deprecated] : undefined,
         } as monaco.languages.CompletionItem);
       }
@@ -91,7 +90,6 @@ export const btexCompletionItemProvider: monaco.languages.CompletionItemProvider
           insertText: snippet.insertText ?? name,
           insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: snippet.signature ?? name,
-          documentation: { value: snippet.doc[options.locale] },
           tags: snippet.deprecated ? [monaco.languages.CompletionItemTag.Deprecated] : undefined,
         } as monaco.languages.CompletionItem);
       }
@@ -110,7 +108,6 @@ export const btexCompletionItemProvider: monaco.languages.CompletionItemProvider
           insertText: command.insertText ?? name,
           insertTextRules: command.insertTextRules,
           detail: command.signature ?? name,
-          documentation: { value: command.doc[options.locale] },
           tags: command.deprecated ? [monaco.languages.CompletionItemTag.Deprecated] : undefined,
         } as monaco.languages.CompletionItem);
       }
@@ -142,12 +139,6 @@ export const btexCompletionItemProvider: monaco.languages.CompletionItemProvider
             label: `\\end{${match[0]}}`,
             insertText: `\\end{${match[0]}}`,
             detail: `\\end{${match[0]}}`,
-            documentation: {
-              value: commandDictionary['\\end'].doc[options.locale].replace(
-                /#environment/g,
-                match[0]
-              ),
-            },
           } as monaco.languages.CompletionItem);
         }
       }

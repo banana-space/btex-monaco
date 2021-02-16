@@ -72,6 +72,7 @@ export function onDidChangeModelContent(
 
       let decorations: monaco.editor.IModelDeltaDecoration[] = [];
       let line = 1;
+      let changedAmount = 0;
       for (let i = 0; i < changes.length; i++) {
         let change = changes[i];
         if (change.added) {
@@ -87,10 +88,13 @@ export function onDidChangeModelContent(
             },
           });
           line += change.count ?? 1;
+          changedAmount += change.count ?? 1;
         } else if (change.removed) {
           let startLine = line;
+          changedAmount += change.count ?? 1;
           if (i + 1 < changes.length && changes[i + 1].added) {
             line += changes[i + 1].count ?? 1;
+            changedAmount += changes[i + 1].count ?? 1;
             i++;
           }
 
@@ -109,6 +113,12 @@ export function onDidChangeModelContent(
         } else {
           line += change.count ?? 1;
         }
+      }
+
+      if (changedAmount > 200) {
+        // Disable diff -- large diffs are super slow.
+        decorations = [];
+        delete (editor as any)._diffSource;
       }
 
       let oldDecorations = ((model as any)._diffDecorations as string[]) ?? [];

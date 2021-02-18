@@ -8,7 +8,10 @@ import { btexLightTheme } from './lib/themes';
 import { btexDefinitionProvider, overrideGoToDefinition } from './lib/DefinitionProvider';
 import { imports } from './lib/data';
 
-// Fix Firefox clipboard issue
+// Fix clipboard issue
+if (!navigator.clipboard) {
+  (navigator.clipboard as any) = {};
+}
 if (!navigator.clipboard.readText) {
   navigator.clipboard.readText = function () {
     return new Promise<string>((resolve) => resolve(''));

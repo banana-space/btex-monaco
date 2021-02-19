@@ -15,7 +15,7 @@ export const btexDefinitionProvider: monaco.languages.DefinitionProvider = {
       .replace(/(^|[^\\])%.*/, '$1');
     let fullLine = model.getLineContent(position.lineNumber);
 
-    let match = line.match(/\\(@?@?[a-zA-Z]+|[^@]?)$/);
+    let match = line.match(/\\(@?@?[a-zA-Z]*|[^@]?)$/);
     if (match) {
       let sub = fullLine.substring(match.index as number);
 

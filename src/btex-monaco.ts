@@ -63,6 +63,7 @@ export function createEditor(
     fontFamily: '"Cascadia Code", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
     fontSize: 16,
     readOnly,
+    automaticLayout: true,
   });
 
   if (language === 'btex') initializeEditor(editor);

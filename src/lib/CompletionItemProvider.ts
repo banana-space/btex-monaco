@@ -144,6 +144,7 @@ export const btexCompletionItemProvider: monaco.languages.CompletionItemProvider
       }
     }
 
+    if (suggestions.length === 0) return null;
     return { suggestions };
   },
 };

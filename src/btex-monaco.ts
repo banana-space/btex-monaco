@@ -64,6 +64,9 @@ export function createEditor(
     fontSize: 16,
     readOnly,
     automaticLayout: true,
+    unicodeHighlight: {
+      ambiguousCharacters: false,
+    },
   });
 
   if (language === 'btex') initializeEditor(editor);

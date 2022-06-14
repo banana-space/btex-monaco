@@ -20,6 +20,7 @@ export const btexLightTheme: monaco.editor.IStandaloneThemeData = {
     { token: 'text', foreground: '40484c' },
     { token: 'text.math', foreground: '687074' },
     { token: 'text.special', foreground: 'f87000' },
+    { token: 'text.link', foreground: '9068d8' },
     { token: 'comment', foreground: 'a0a0a0' },
   ],
   colors: {

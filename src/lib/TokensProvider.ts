@@ -6,8 +6,10 @@ export const btexTokensProvider: monaco.languages.IMonarchLanguage = {
   envStarCommands,
   mathEnvironments: mathEnvironments.map((name) => '{' + name + '}'),
   defaultToken: 'text',
+  includeLF: true,
   tokenizer: {
     root: [
+      [/\[\[/, 'delimiter', '@inlink'],
       { include: '@common' },
       [/\\begin(?=\s*\{)/, 'command', '@begin'],
       [/\\@?[aegpt@]?def(?![a-zA-Z])/, { token: 'command', next: '@def.1' }],
@@ -61,7 +63,21 @@ export const btexTokensProvider: monaco.languages.IMonarchLanguage = {
         /(\\@?env[ap]?def)(\s*)(\**)(\s*)(\{)/,
         ['command', '', 'text', '', { token: '@rematch', next: '@def.4' }],
       ],
+      [/(\\(?:href|url))(\s*)(\{)/, ['command', '', { token: 'delimiter.curly', next: '@inurl' }]],
       { include: '@commands' },
+      [/^(\s*)(\*)([\s\n])/, ['', 'text.special', '']],
+      [
+        /^(\s*)(==)((?!=).*[^=]==\s*\n)/,
+        ['', 'text.special', { token: '@rematch', next: '@intitle' }],
+      ],
+      [
+        /^(\s*)(===)((?!=).*[^=]===\s*\n)/,
+        ['', 'text.special', { token: '@rematch', next: '@intitle' }],
+      ],
+      [
+        /^(\s*)(====)((?!=).*[^=]====\s*\n)/,
+        ['', 'text.special', { token: '@rematch', next: '@intitle' }],
+      ],
       [/./, 'text'],
     ],
 
@@ -73,6 +89,30 @@ export const btexTokensProvider: monaco.languages.IMonarchLanguage = {
       { include: '@commands.math' },
       { include: '@common' },
       [/./, 'text.math'],
+    ],
+
+    intitle: [
+      [/\n/, '', '@popall'],
+      [/(==+)(\s*\n)/, ['text.special', { token: '', next: '@pop' }]],
+      { include: '@root' },
+    ],
+
+    inlink: [
+      [/\n/, '', '@popall'],
+      [/\||\]\]/, 'delimiter', '@pop'],
+      [/\{/, 'delimiter.curly', 'inlink.group'],
+      { include: '@common' },
+      { include: '@commands' },
+      [/./, 'text.link'],
+    ],
+
+    inurl: [
+      [/\n/, '', '@popall'],
+      [/\}/, 'delimiter.curly', '@pop'],
+      [/\{/, 'delimiter.curly', '@push'],
+      { include: '@common' },
+      { include: '@commands' },
+      [/./, 'text.link'],
     ],
 
     common: [
@@ -148,6 +188,12 @@ export const btexTokensProvider: monaco.languages.IMonarchLanguage = {
       [/\{/, 'delimiter.curly', '@push'],
       [/\}/, 'delimiter.curly', '@pop'],
       { include: '@math' },
+    ],
+
+    'inlink.group': [
+      [/\{/, 'delimiter.curly', '@push'],
+      [/\}/, 'delimiter.curly', '@pop'],
+      { include: '@inlink' },
     ],
 
     'def.1': [

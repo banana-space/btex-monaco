@@ -11,3 +11,7 @@
 * 运行 `yarn` 初始化项目文件夹。
 * 运行 `yarn build` 编译代码。
 * 运行 `yarn serve` 启动本地服务器，在 `/test/index.html` 测试编辑器。
+
+## 相关项目
+
+* VS Code 插件: [vscode-btex](https://github.com/Trebor-Huang/vscode-btex)

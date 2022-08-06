@@ -148,7 +148,6 @@ export function onDidChangeModelContent(
 
     // Trigger \begin{...} completion
     if ('\\begin{'.endsWith(newText) && /\\begin\s*\{$/.test(line) && newText !== '') {
-      console.log({ newText, line });
       editor.trigger(null, 'editor.action.triggerSuggest', undefined);
       return;
     }

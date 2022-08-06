@@ -147,9 +147,26 @@ export function onDidChangeModelContent(
     }
 
     // Trigger \begin{...} completion
-    if ('\\begin{'.endsWith(newText) && line.endsWith('{') && newText !== '') {
+    if ('\\begin{'.endsWith(newText) && /\\begin\s*\{$/.test(line) && newText !== '') {
+      console.log({ newText, line });
       editor.trigger(null, 'editor.action.triggerSuggest', undefined);
       return;
+    }
+
+    // Suppress completion on \\
+    if (/\\\\$/.test(line)) {
+      let selections = editor.getSelections();
+      if (selections) {
+        editor.setSelections([
+          {
+            selectionStartLineNumber: 1,
+            selectionStartColumn: 1,
+            positionColumn: 1,
+            positionLineNumber: 1,
+          },
+        ]);
+        editor.setSelections(selections);
+      }
     }
 
     // Non-auto-completed \begin
